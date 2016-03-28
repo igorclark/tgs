@@ -1,0 +1,12 @@
+{application, tgs,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { tgs_app, []}},
+  {env, []}
+ ]}.
