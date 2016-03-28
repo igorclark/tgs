@@ -1,33 +1,37 @@
--module(tgs_gs_sup).
+-module( tgs_gs_sup ).
 
--behaviour(supervisor).
+-behaviour( supervisor ).
 
 %% API
--export([start_link/0]).
+-export( [
+	start_link/0
+] ).
 
 %% Supervisor callbacks
--export([init/1]).
-
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-export( [
+	init/1
+] ).
 
 %% ===================================================================
 %% API functions
 %% ===================================================================
 
 start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
-
+	% only start the tgs_gs_sup supervisor locally
+    supervisor:start_link( { local, ?MODULE }, ?MODULE, [] ).
 
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
 
-init([]) ->
-	io:format("module ~p process ~p init(~p)", [?MODULE, self(), []]),
-	ChildSpec = {
-		tgs_gs, {tgs_gs, start_link, []},
-			permanent, 5000, worker, [tgs_gs]
-	},
-    {ok, { {simple_one_for_one, 5, 10}, [ChildSpec]} }.
+% start a simple_one_for_one supervisor
+% for creation of dynamic tgs_gs gen_servers
+init( [] ) ->
+	error_logger:info_msg( "module ~p process ~p init( ~p )", [ ?MODULE, self(), [] ] ),
 
+	TgsGsSpec = {
+		tgs_gs, { tgs_gs, start_link, [] },
+			permanent, 5000, worker, [ tgs_gs ]
+	},
+
+    { ok, { { simple_one_for_one, 5, 10 }, [ TgsGsSpec ] } }.

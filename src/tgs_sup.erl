@@ -1,47 +1,62 @@
--module(tgs_sup).
+-module( tgs_sup ).
 
--behaviour(supervisor).
+-behaviour( supervisor ).
 
 %% API
--export([start_link/0]).
+-export( [
+	start_link/0
+] ).
 
 %% Supervisor callbacks
--export([init/1]).
-
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-export( [
+	init/1
+] ).
 
 %% ===================================================================
 %% API functions
 %% ===================================================================
 
 start_link() ->
-    {ok, Pid} = supervisor:start_link({local, ?MODULE}, ?MODULE, []),
-	ok = gen_event:add_handler({global,tgs_em}, tgs_eh, []),
-	{ok, Pid}.
+	% only registering the overall supervisor locally
+    { ok, Pid } = supervisor:start_link( { local, ?MODULE }, ?MODULE, [] ),
+
+	% once the supervisor is started, all its children are running
+	% so now's the time to add the tgs_eh event handler for events
+	% managed by the tgs_em event manager
+	ok = gen_event:add_handler( { global, tgs_em }, tgs_eh, [] ),
+
+	{ ok, Pid }.
 
 
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
 
-init([]) ->
-	io:format("module ~p process ~p init(~p)", [?MODULE, self(), []]),
+init( [] ) ->
+	error_logger:info_msg( "module ~p process ~p init( ~p )", [ ?MODULE, self(), [] ]),
+
+	% tgs_gs_sup supervisor to
+	% supervise tgs_gs gen_servers
 	TgsGsSup = {
 		tgs_gs_sup,
-		{tgs_gs_sup, start_link, []},
+		{ tgs_gs_sup, start_link, [] },
 		permanent,
 		5000,
 		supervisor,
-		[tgs_gs_sup]
+		[ tgs_gs_sup ]
 	},
+
+	% gen_event manager for tgs_em events
+	% registered globally because ...
+	% i'm learning about using 'global' registry
 	TgsEmSup = {
-		{global, tgs_em},
-		{gen_event, start_link, [{global, tgs_em}]},
+		{ global, tgs_em },
+		{ gen_event, start_link, [ { global, tgs_em } ] },
 		permanent,
 		5000,
 		worker,
-		[dynamic]
+		[ dynamic ]
 	},
-    {ok, { {one_for_one, 5, 10}, [TgsGsSup, TgsEmSup]} }.
+
+    { ok, { { one_for_one, 5, 10 }, [ TgsGsSup, TgsEmSup ] } }.
 
