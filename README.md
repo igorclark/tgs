@@ -1,6 +1,6 @@
 proof-of-concept project to help me understand a way to have dynamically supervised `gen_event` processes which are addressable by name.
 
-basic idea is to use the `{via, Registry, Name}` variant of `gen_server:start_link/3` so that all the `gen_server` processes are findable via `Registry:registered_names()`/`Registry:whereis_name()`, and then provide wrappers round those in the `gen_server` module. we use a `simple_one_for_one` supervisor, spawning as many `gen_server`s as we want, and once the names are registered via `start_link/3` (as e.g. `{tgs_gs, server1}`), we can get `gen_server` to `cast()` or `call()` to it using the name (`server1`) directly, using `{via, Regisry, {tgs_gs, server1}}`, and we don't have to muck about with PIDs.
+basic idea is to use the `{via, Registry, Name}` variant of `gen_server:start_link/3` so that all the `gen_server` processes are findable via `Registry:registered_names()`/`Registry:whereis_name()`, and then provide wrappers round those in the `gen_server` module. we use a `simple_one_for_one` supervisor, spawning as many `gen_server`s as we want, and once the names are registered via `start_link/3` (as e.g. `{tgs_gs, server1}`), we can get `gen_server` to `cast()` or `call()` to it using the name (`server1`) directly, using `{via, Registry, {tgs_gs, server1}}`, and we don't have to muck about with PIDs.
 
 this way we can do e.g.:
 
