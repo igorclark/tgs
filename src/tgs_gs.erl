@@ -58,7 +58,9 @@ stop_server( Name ) ->
 	case supervisor:terminate_child( ?SUPERVISOR, Pid ) of
 		{ error, simple_one_for_one } ->
 			{ error, { name_not_found, Name } };
-		OtherResponse -> OtherResponse
+		OtherResponse ->
+			tgs_eh:update_server_list(),
+			OtherResponse
 	end.
 
 % get a list of names under which
@@ -90,7 +92,7 @@ init( [ Name ] ) ->
 	error_logger:info_msg( "module ~p process ~p init(~p)", [ ?MODULE, self(), Name ] ),
 	% add to list in tgs_eh event handler just to enable
 	% performance testing against global registry version
-	tgs_eh:add_server( Name ),
+	tgs_eh:update_server_list(),
     { ok, Name }.
 
 % return the message, just to test
@@ -99,14 +101,14 @@ handle_call( Msg, _From, State ) ->
 
 % print any message to show we got it
 handle_cast( _Msg, State ) ->
-	error_logger:info_msg( "module ~p process ~p (~p) got message: ~p", [ ?MODULE, self(), State, _Msg ] ),
+%	error_logger:info_msg( "module ~p process ~p (~p) got message: ~p", [ ?MODULE, self(), State, _Msg ] ),
     { noreply, State }.
 
 handle_info( _Info, State ) ->
     { noreply, State }.
 
-terminate( _Reason, _State ) ->
-	error_logger:info_msg( "module ~p process ~p terminating", [ ?MODULE, self() ] ),
+terminate( _Reason, State ) ->
+	error_logger:info_msg( "module ~p process ~p name ~p terminating", [ ?MODULE, self(), State ] ),
     ok.
 
 code_change( _OldVsn, State, _Extra ) ->

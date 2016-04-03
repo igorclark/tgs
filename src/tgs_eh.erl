@@ -15,6 +15,7 @@
 -export( [
 	add_server/1,
 	get_servers/0,
+	update_server_list/0,
 	time_sending_message_via_name_list/1,
 	time_sending_message_via_registry/1
 ] ).
@@ -51,7 +52,11 @@ add_server( Name ) ->
 
 % get the stored list of tgs_gs server names
 get_servers() ->
-	gen_event:call( { global, ?MANAGER }, tgs_eh, get_servers).
+	gen_event:call( { global, ?MANAGER }, tgs_eh, get_servers ).
+
+% update the stored list from the global registry
+update_server_list() ->
+	gen_event:call( { global, ?MANAGER }, tgs_eh, update_server_list ).
 
 % send a message to all tgs_gs processes we know about
 % according to the list we have in #state
@@ -102,6 +107,12 @@ handle_call({time_sending_message_via_registry, Event}, State) ->
 
 handle_call( get_servers, State ) ->
 	{ ok, State#state.servers, State };
+
+handle_call( update_server_list, State ) ->
+	NewState = State#state{
+		servers = tgs_gs:get_servers()
+	},
+	{ ok, NewState#state.servers, NewState };
 
 handle_call( Request, State ) ->
     Reply = [ { call, Request }, { state, State } ],
